@@ -1,7 +1,9 @@
+import socket
+import hashlib  # bug1: import hashlib
+from socket import *
 import json
 import os
 from os.path import join, getsize
-import hashlib
 import argparse
 from threading import Thread
 import struct
@@ -12,6 +14,7 @@ import base64
 import uuid
 import math
 import shutil
+
 
 MAX_PACKET_SIZE = 20480
 
@@ -656,11 +659,11 @@ def tcp_listener(server_ip, server_port):
     :return: None
     """
     global logger
-    server_socket = socket(AF_INET, SOCK_DGRAM)
+    server_socket = socket(AF_INET, SOCK_STREAM)
     server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     server_socket.bind((server_ip, int(server_port)))
     server_socket.listen(20)
-    logger.info(Server is ready)
+    logger.info("<<<  Server is ready  >>>")
     logger.info(
         f'Start the TCP service, listing {server_port} on IP {"All available" if server_ip == "" else server_ip}')
     while True:
@@ -688,4 +691,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main
+    main()
