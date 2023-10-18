@@ -670,7 +670,7 @@ def tcp_listener(server_ip, server_port):
         try:
             connection_socket, addr = server_socket.accept()
             logger.info(f'--> New connection from {addr[0]} on {addr[1]}')
-            th = Thread(target=STEP_service, args=(connection_socket, addr))
+            th = Thread(target=Step_service, args=(connection_socket, addr))
             th.daemon = True
 
         except Exception as ex:
