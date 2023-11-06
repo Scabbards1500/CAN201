@@ -1,9 +1,7 @@
-import socket
-import hashlib  # bug1: import hashlib
-from socket import *
 import json
 import os
 from os.path import join, getsize
+import hashlib
 import argparse
 from threading import Thread
 import struct
@@ -14,7 +12,7 @@ import base64
 import uuid
 import math
 import shutil
-
+from socket import *
 
 MAX_PACKET_SIZE = 20480
 
@@ -394,7 +392,8 @@ def file_process(username, request_operation, json_data, bin_data, connection_so
         if os.path.exists(join('file', username, json_data[FIELD_KEY])) is True:
             logger.error(f'<-- The "key" {json_data[FIELD_KEY]} is completely uploaded.')
             connection_socket.send(
-                make_response_packet(OP_UPLOAD, 408, TYPE_FILE, f'The "key" {json_data[FIELD_KEY]} is completely uploaded.', {}))
+                make_response_packet(OP_UPLOAD, 408, TYPE_FILE,
+                                     f'The "key" {json_data[FIELD_KEY]} is completely uploaded.', {}))
             return
 
         if os.path.exists(join('tmp', username, json_data[FIELD_KEY])) is False:
@@ -544,7 +543,8 @@ def Step_service(connection_socket, addr):
         if FIELD_DIRECTION in json_data:
             if json_data[FIELD_DIRECTION] == DIR_EARTH:
                 connection_socket.send(
-                    make_response_packet('3BODY', 333, 'DANGEROUS', f'DO NOT ANSWER! DO NOT ANSWER! DO NOT ANSWER!', {}))
+                    make_response_packet('3BODY', 333, 'DANGEROUS', f'DO NOT ANSWER! DO NOT ANSWER! DO NOT ANSWER!',
+                                         {}))
                 continue
 
         # Check the compulsory fields
@@ -607,7 +607,7 @@ def Step_service(connection_socket, addr):
                     md5_auth_str = hashlib.md5(f'{user_str}kjh20)*(1'.encode()).hexdigest()
                     connection_socket.send(
                         make_response_packet(OP_LOGIN, 200, TYPE_AUTH, f'Login successfully', {
-                            FIELD_TOKEN: base64.b64encode(f'{user_str}.{md5_auth_str}'.encode()).decode()
+                            FIELD_TOKEN: base64.b64encode(f'{user_str}.{md5_auth_str}'.encode()).decode()  # ？
                         }))
                     continue
 
@@ -644,7 +644,7 @@ def Step_service(connection_socket, addr):
             continue
 
         if request_type == TYPE_FILE:
-            data_process(username, request_operation, json_data, bin_data, connection_socket)
+            file_process(username, request_operation, json_data, bin_data, connection_socket)
             continue
 
     connection_socket.close()
@@ -663,7 +663,7 @@ def tcp_listener(server_ip, server_port):
     server_socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     server_socket.bind((server_ip, int(server_port)))
     server_socket.listen(20)
-    logger.info("<<<  Server is ready  >>>")
+    logger.info("Server is ready")
     logger.info(
         f'Start the TCP service, listing {server_port} on IP {"All available" if server_ip == "" else server_ip}')
     while True:
@@ -672,6 +672,7 @@ def tcp_listener(server_ip, server_port):
             logger.info(f'--> New connection from {addr[0]} on {addr[1]}')
             th = Thread(target=Step_service, args=(connection_socket, addr))
             th.daemon = True
+            th.start()
 
         except Exception as ex:
             logger.error(f'{str(ex)}@{ex.__traceback__.tb_lineno}')
