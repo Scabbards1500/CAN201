@@ -107,7 +107,7 @@ def make_packet(json_data, bin_data=None):
     Any information or data for TCP transmission has to use this function to get the packet.
     :param json_data:
     :param bin_data:
-    :return:
+    :return:server_port
         The complete binary packet
     """
     j = json.dumps(dict(json_data), ensure_ascii=False)
@@ -181,6 +181,10 @@ def get_tcp_packet(conn):
     return json_data, bin_data
 
 
+transmission_rates = []
+transmission_moment = []
+
+
 def data_process(username, request_operation, json_data, connection_socket):
     """
     Data Process
@@ -191,6 +195,10 @@ def data_process(username, request_operation, json_data, connection_socket):
     :return: None
     """
     global logger
+    # 这边就是修改的绘图函数
+    start_time = time.time()
+
+
     if request_operation == OP_GET:
         if FIELD_KEY not in json_data.keys():
             logger.info(f'<-- Get data without key.')
@@ -254,6 +262,8 @@ def data_process(username, request_operation, json_data, connection_socket):
             logger.error(f'{str(ex)}@{ex.__traceback__.tb_lineno}')
 
 
+
+
 def file_process(username, request_operation, json_data, bin_data, connection_socket):
     """
     File Process
@@ -265,6 +275,7 @@ def file_process(username, request_operation, json_data, bin_data, connection_so
     :return:
     """
     global logger
+
     if request_operation == OP_GET:
         if FIELD_KEY not in json_data.keys():
             logger.info(f'--> Plan to download file {json_data[FIELD_KEY]}')
@@ -521,6 +532,8 @@ def file_process(username, request_operation, json_data, bin_data, connection_so
                                                         'An available block.', rval, bin_data))
 
 
+
+
 def Step_service(connection_socket, addr):
     """
     STEP Protocol service
@@ -529,6 +542,7 @@ def Step_service(connection_socket, addr):
     :return: None
     """
     global logger
+    start_time1 =time.time()
     data = None
     while True:
         json_data, bin_data = get_tcp_packet(connection_socket)
@@ -639,16 +653,40 @@ def Step_service(connection_socket, addr):
         os.makedirs(join('file', username), exist_ok=True)
         os.makedirs(join('tmp', username), exist_ok=True)
 
+
         if request_type == TYPE_DATA:
             data_process(username, request_operation, json_data, connection_socket)
             continue
 
         if request_type == TYPE_FILE:
+            start_time = time.time()
+            # draw here
             file_process(username, request_operation, json_data, bin_data, connection_socket)
+            # huitu
+            end_time = time.time()
+            transmission_time = end_time - start_time
+            data_size = len(json_data)  # 假设数据大小为JSON数据的长度
+            # 计算传输速率（字节/秒）
+            if transmission_time > 0:
+                transmission_rate = data_size / transmission_time
+            else:
+                transmission_rate = 0
+            # 将传输速率添加到列表中
+            transmission_rates.append(transmission_rate)
+            transmission_moment.append(end_time - start_time1)
             continue
 
-    connection_socket.close()
-    logger.info(f'Connection close. {addr}')
+    #draw
+    # plt.plot(transmission_moment, transmission_rates, 'r-', label='type1')
+    # plt.ylim(0, 18000)
+    # plt.xlabel('Transmission Time')
+    # plt.ylabel('Transmission Rate (bytes/second)')
+    # plt.title('Transmission Rate Over Time')
+    # plt.savefig('/home/hanling/PythonProject/transfer_speed_curve.png')
+    # plt.show()
+    #
+    # connection_socket.close()
+    # logger.info(f'Connection close. {addr}')
 
 
 def tcp_listener(server_ip, server_port):
