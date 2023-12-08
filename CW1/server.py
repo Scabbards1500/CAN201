@@ -74,9 +74,9 @@ def set_logger(logger_name):
 
     # --> LOG FILE
     logger_file_name = get_time_based_filename('log')
-    os.makedirs(f'log/{logger_name}', exist_ok=True)
+    os.makedirs(f'CW1/log/{logger_name}', exist_ok=True)
 
-    fh = TimedRotatingFileHandler(filename=f'log/{logger_name}/log', when='D', interval=1, backupCount=1)
+    fh = TimedRotatingFileHandler(filename=f'CW1/log/{logger_name}/log', when='D', interval=1, backupCount=1)
     fh.setFormatter(formatter)
 
     fh.setLevel(logging.INFO)
