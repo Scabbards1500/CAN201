@@ -286,6 +286,18 @@ def upload_block(client_socket, token, key, start_block, end_block,block_size, f
 
 
 def upload_file_thread(client_socket, upload_plan, token, key, file_size, path, num_threads):
+     """
+    Upload a file to the server according to the upload plan.
+    Each block is uploaded separately in the loop.
+    :param client_socket
+    :param upload_plan
+    :param token
+    :param key
+    :param file_size
+    :param path: file path
+    :param num_threads: the number of threads
+    :return:
+    """
     total_block = upload_plan[FIELD_TOTAL_BLOCK]
     block_size = upload_plan[FIELD_BLOCK_SIZE]
     md5 = ""
@@ -307,47 +319,6 @@ def upload_file_thread(client_socket, upload_plan, token, key, file_size, path, 
     return md5
 
 
-
-
-def upload_file(client_socket, upload_plan, token, key, file_size, path):
-    """
-    Upload a file to the server according to the upload plan.
-    Each block is uploaded separately in the loop.
-    :param client_socket
-    :param upload_plan
-    :param token
-    :param key
-    :param file_size
-    :param path: file path
-    :return:
-    """
-    total_block = upload_plan[FIELD_TOTAL_BLOCK]
-    block_size = upload_plan[FIELD_BLOCK_SIZE]
-    md5 = ""
-    with open(path, "rb") as file:
-        for block_index in range(total_block):
-            data = {
-                FIELD_TOKEN: token,
-                FIELD_KEY: key,
-                FIELD_BLOCK_INDEX: block_index
-            }
-            file.seek(block_size * block_index)
-            if block_size * (block_index + 1) < file_size:
-                bin_data = file.read(block_size)
-            else:
-                bin_data = file.read(file_size - block_size * block_index)
-            client_socket.send(make_request_packet(OP_UPLOAD, TYPE_FILE, data, bin_data))
-            json_data, _ = get_tcp_packet(client_socket)
-            json_data: dict
-            if json_data is not None and json_data[FIELD_STATUS] == 200:
-                logger.info(json_data)
-                if FIELD_MD5 in json_data:
-                    md5 = json_data[FIELD_MD5]
-            else:
-                logger.warning("Error: error in uploading blocks.")
-    return md5
-
-
 def tcp_client_upload(server_ip, server_port, data, num_threads=1):
     """S
     TCP client upload: connect to a port through TCP and upload a file
@@ -363,12 +334,7 @@ def tcp_client_upload(server_ip, server_port, data, num_threads=1):
     logger.info("Request for token...")
     token = get_token_auth(client_socket, data)
     upload_plan = get_upload_plan(client_socket, token, data[FIELD_KEY], data[FIELD_SIZE])
-    # md5 = upload_file(client_socket, upload_plan, token, data[FIELD_KEY], data[FIELD_SIZE], data[FILE_PATH])
-    # if md5 == get_file_md5(data[FILE_PATH]):
-    #     logger.info("Upload successfully! md5 is correct.")
-    # else:
-    #     logger.warning("Upload failed! md5 is not correct.")
-
+    
     upload_file_thread(client_socket, upload_plan, token, data[FIELD_KEY], data[FIELD_SIZE], data[FILE_PATH], num_threads)
     if md5 == get_file_md5(data[FILE_PATH]):
         logger.info("Upload successfully! md5 is correct.")
