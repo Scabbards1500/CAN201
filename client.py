@@ -116,6 +116,7 @@ def check_upload_error(json_data, cliSocket):
     :param cliSocket:
     :return:
     """
+
     global logger, return_md5
     if json_data[FIELD_STATUS] == 200:
         if FIELD_MD5 in json_data:
